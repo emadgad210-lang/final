@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ميعاد — نظام حجز وإدارة العيادات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#241826; --ink-soft:#5A4A57; --ink-faint:#93818C;
+    --paper:#F5F1F0; --paper-1:#FFFFFF; --paper-2:#EBE1E6;
+    --teal:#8C3A5C; --teal-deep:#5E2542; --teal-wash:#F1E1E8;
+    --amber:#B5872E; --amber-wash:#F1E6C9;
+    --rust:#3E6E86; --rust-wash:#DDE7EA;
+    --line:#DDD2D6; --line-strong:#C2AEB6;
+    --radius-card:3px;
+    --shadow-ink: 0 18px 40px -18px rgba(36,24,38,0.35);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'IBM Plex Sans Arabic', Tahoma, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+  }
+  img,svg{display:block;max-width:100%;}
+  a{color:inherit;}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 28px;}
+  @media (max-width:640px){.wrap{padding:0 20px;}}
+
+  ::selection{background:var(--teal); color:#fff;}
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:40;
+    background:rgba(241,244,236,0.88);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .header-row{display:flex; align-items:center; justify-content:space-between; padding:18px 0;}
+  .logo{display:flex; align-items:center; gap:10px; font-weight:700; font-size:19px; color:var(--ink); text-decoration:none;}
+  .logo-mark{width:34px; height:34px; border-radius:9px; background:var(--teal); position:relative; flex-shrink:0;}
+  .logo-mark::before{content:'';position:absolute; inset:9px 9px 15px; border:2px solid var(--paper); border-radius:2px;}
+  .logo-mark::after{content:'';position:absolute; right:9px; left:9px; top:14px; height:2px; background:var(--paper);}
+  nav.main-nav{display:flex; align-items:center; gap:30px;}
+  nav.main-nav a{font-size:14.5px; color:var(--ink-soft); text-decoration:none;}
+  nav.main-nav a:hover{color:var(--ink);}
+  .header-actions{display:flex; align-items:center; gap:14px;}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:11px 22px; border-radius:8px; font-size:14.5px; font-weight:600;
+    text-decoration:none; border:1px solid transparent; cursor:pointer;
+    font-family:inherit;
+  }
+  .btn-primary{background:var(--ink); color:var(--paper);}
+  .btn-primary:hover{background:var(--teal-deep);}
+  .btn-ghost{background:transparent; color:var(--ink); border-color:var(--line-strong);}
+  .btn-ghost:hover{border-color:var(--ink);}
+  .btn-sm{padding:9px 16px; font-size:13.5px;}
+  @media (max-width:820px){ nav.main-nav{display:none;} }
+
+  /* ---------- hero ---------- */
+  .hero{padding:76px 0 60px;}
+  .hero-grid{display:grid; grid-template-columns:1.05fr 0.95fr; gap:56px; align-items:center;}
+  @media (max-width:900px){.hero-grid{grid-template-columns:1fr; gap:44px;}}
+
+  .hero-kicker{font-size:14.5px; color:var(--teal-deep); font-weight:600; margin:0 0 18px;}
+  h1.hero-title{
+    font-size:clamp(34px,4.6vw,52px); line-height:1.16; font-weight:700;
+    margin:0 0 22px; letter-spacing:-0.01em; max-width:15ch;
+  }
+  .hero-sub{font-size:17px; color:var(--ink-soft); max-width:46ch; margin:0 0 30px;}
+  .hero-ctas{display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:26px;}
+  .hero-trust{font-size:13px; color:var(--ink-faint); display:flex; align-items:center; gap:10px;}
+  .hero-trust .dot{width:5px; height:5px; border-radius:50%; background:var(--line-strong);}
+
+  /* appointment ticket illustration */
+  .ticket-stage{position:relative; display:flex; justify-content:center; padding:10px;}
+  .ticket{
+    width:100%; max-width:380px; background:var(--paper-1);
+    border-radius:14px; box-shadow:var(--shadow-ink);
+    transform:rotate(-3deg);
+    position:relative; overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .ticket-top{padding:22px 24px 18px; border-bottom:2px dashed var(--line-strong); position:relative;}
+  .ticket-top::before,.ticket-top::after{
+    content:''; position:absolute; bottom:-11px; width:22px; height:22px;
+    background:var(--paper); border-radius:50%;
+  }
+  .ticket-top::before{right:-11px;}
+  .ticket-top::after{left:-11px;}
+  .ticket-clinic{font-size:12.5px; color:var(--ink-faint); margin-bottom:4px;}
+  .ticket-clinic strong{color:var(--ink); font-weight:600;}
+  .ticket-row{display:flex; justify-content:space-between; align-items:baseline; margin-top:14px;}
+  .ticket-label{font-size:11.5px; color:var(--ink-faint);}
+  .ticket-value{font-size:14.5px; font-weight:600; color:var(--ink);}
+  .ticket-patient{font-size:20px; font-weight:700; margin-top:16px;}
+  .ticket-bottom{padding:20px 24px 26px; display:flex; align-items:center; justify-content:space-between;}
+  .ticket-time{font-size:13.5px; color:var(--ink-soft);}
+  .ticket-time b{display:block; font-size:22px; color:var(--ink); font-weight:700;}
+  .stamp{
+    width:76px; height:76px; border-radius:50%; border:2.5px solid var(--rust);
+    color:var(--rust); display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; transform:rotate(11deg);
+    opacity:0; animation:stamp-in .5s cubic-bezier(.2,1.4,.4,1) .5s forwards;
+  }
+  @keyframes stamp-in{
+    from{opacity:0; transform:rotate(28deg) scale(1.7);}
+    to{opacity:1; transform:rotate(11deg) scale(1);}
+  }
+  .float-card{
+    position:absolute; background:var(--paper-1); border:1px solid var(--line);
+    border-radius:10px; padding:10px 14px; font-size:12.5px; font-weight:600;
+    box-shadow:var(--shadow-ink); display:flex; align-items:center; gap:8px;
+  }
+  .float-card svg{width:15px; height:15px; color:var(--teal); flex-shrink:0;}
+  .float-1{top:6%; left:-4%; color:var(--teal-deep);}
+  .float-2{bottom:8%; right:-2%; color:var(--ink);}
+  @media (max-width:520px){.float-card{display:none;}}
+
+  /* ---------- section shell ---------- */
+  section{padding:78px 0;}
+  .section-head{max-width:60ch; margin-bottom:44px;}
+  .section-head.center{margin-left:auto; margin-right:auto; text-align:center;}
+  h2.section-title{font-size:clamp(26px,3.2vw,34px); font-weight:700; margin:0 0 14px; line-height:1.25;}
+  .section-desc{font-size:15.5px; color:var(--ink-soft); margin:0;}
+
+  /* ---------- pains ---------- */
+  .pains{background:var(--paper-2); border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+  .pains-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  @media (max-width:800px){.pains-grid{grid-template-columns:1fr;}}
+  .pain-item{background:var(--paper-2); padding:30px 28px;}
+  .pain-old{font-size:13px; color:var(--ink-faint); text-decoration:line-through; text-decoration-color:var(--rust); margin:0 0 10px;}
+  .pain-new{font-size:16px; font-weight:600; margin:0; color:var(--ink);}
+
+  /* ---------- feature tabs ---------- */
+  .feature-list{display:flex; flex-direction:column; gap:0;}
+  .feature-row{
+    display:grid; grid-template-columns:230px 1fr; gap:32px;
+    padding:30px 0; border-top:1px solid var(--line);
+    align-items:start;
+  }
+  .feature-list .feature-row:last-child{border-bottom:1px solid var(--line);}
+  @media (max-width:720px){.feature-row{grid-template-columns:1fr; gap:12px;}}
+  .feature-tab{
+    display:inline-flex; align-items:center; gap:10px; font-weight:600; font-size:15.5px;
+    padding:6px 0;
+  }
+  .feature-tab .swatch{width:9px; height:26px; border-radius:2px; flex-shrink:0;}
+  .feature-body p{margin:0; color:var(--ink-soft); font-size:15px; max-width:56ch;}
+  .feature-body{display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:center;}
+  @media (max-width:880px){.feature-body{grid-template-columns:1fr;}}
+  .feature-shot{
+    border:1px solid var(--line); border-radius:10px; background:var(--paper-1);
+    padding:14px; font-size:12px; color:var(--ink-faint);
+  }
+  .mini-calendar{display:grid; grid-template-columns:repeat(6,1fr); gap:5px;}
+  .mini-cal-cell{aspect-ratio:1; border-radius:4px; background:var(--paper-2); position:relative;}
+  .mini-cal-cell.busy{background:var(--teal-wash);}
+  .mini-cal-cell.busy::after{content:''; position:absolute; inset:3px; border-radius:2px; background:var(--teal);}
+  .mini-cal-cell.amber::after{background:var(--amber);}
+  .mini-file-row{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line);}
+  .mini-file-row:last-child{border-bottom:none;}
+  .mini-avatar{width:26px; height:26px; border-radius:50%; background:var(--paper-2); flex-shrink:0;}
+  .mini-bar-row{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .mini-bar-track{flex:1; height:8px; border-radius:99px; background:var(--paper-2); overflow:hidden;}
+  .mini-bar-fill{height:100%; border-radius:99px; background:var(--teal);}
+
+  /* ---------- booking page mock ---------- */
+  .booking-showcase{
+    display:grid; grid-template-columns:0.9fr 1.1fr; gap:52px; align-items:center;
+    background:var(--ink); color:var(--paper); border-radius:18px; padding:50px;
+  }
+  @media (max-width:900px){.booking-showcase{grid-template-columns:1fr; padding:34px 26px;}}
+  .booking-showcase h2{color:var(--paper);}
+  .booking-showcase .section-desc{color:#CBB9C5;}
+  .link-list{list-style:none; margin:26px 0 0; padding:0; display:flex; flex-direction:column; gap:12px;}
+  .link-list li{display:flex; gap:10px; align-items:flex-start; font-size:14.5px; color:#E3D3DC;}
+  .link-list svg{width:17px; height:17px; color:var(--teal); flex-shrink:0; margin-top:2px;}
+  .phone-mock{
+    background:#170F19; border:1px solid #362530; border-radius:16px; padding:18px;
+    box-shadow:0 24px 50px -20px rgba(0,0,0,0.6);
+  }
+  .phone-mock .pm-label{font-size:11px; color:#93818C; margin-bottom:12px;}
+  .pm-field{background:#241826; border:1px solid #3F2D3E; border-radius:8px; padding:10px 12px; font-size:13px; color:#B39CAE; margin-bottom:10px;}
+  .pm-doctor-pick{display:flex; gap:8px; margin-bottom:14px;}
+  .pm-doctor-pick span{flex:1; text-align:center; padding:9px 6px; border-radius:7px; font-size:12px; border:1px solid #3F2D3E; color:#B39CAE;}
+  .pm-doctor-pick span.on{background:var(--teal-wash); color:var(--teal-deep); border-color:transparent; font-weight:600;}
+  .pm-cta{background:var(--teal); color:#fff; text-align:center; padding:11px; border-radius:8px; font-size:13.5px; font-weight:600; margin-top:4px;}
+
+  /* ---------- testimonials ---------- */
+  .notes-row{display:grid; grid-template-columns:repeat(3,1fr); gap:26px;}
+  @media (max-width:860px){.notes-row{grid-template-columns:1fr;}}
+  .note-card{
+    background:var(--amber-wash); border-radius:4px; padding:26px 24px;
+    box-shadow:var(--shadow-ink);
+  }
+  .note-card:nth-child(2){background:var(--teal-wash); transform:rotate(1deg);}
+  .note-card:nth-child(1){transform:rotate(-1.4deg);}
+  .note-card:nth-child(3){background:var(--rust-wash); transform:rotate(0.8deg);}
+  .note-text{font-size:15px; color:var(--ink); margin:0 0 18px; line-height:1.65;}
+  .note-who{font-size:13px; font-weight:600; color:var(--ink-soft); margin:0;}
+
+  /* ---------- final cta ---------- */
+  .final-cta{text-align:center; padding:90px 0;}
+  .final-cta h2{font-size:clamp(28px,4vw,40px); max-width:18ch; margin:0 auto 18px;}
+  .final-cta .section-desc{max-width:44ch; margin:0 auto 34px;}
+
+  footer{border-top:1px solid var(--line); padding:36px 0;}
+  .footer-row{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;}
+  .footer-links{display:flex; gap:22px; font-size:13.5px; color:var(--ink-faint);}
+  .footer-links a{text-decoration:none;}
+  .footer-links a:hover{color:var(--ink);}
+  .footer-copy{font-size:13px; color:var(--ink-faint);}
+
+  @media (prefers-reduced-motion: reduce){
+    .stamp{animation:none; opacity:1; transform:rotate(11deg);}
+    html{scroll-behavior:auto;}
+  }
+
+  a:focus-visible, button:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-row">
+    <a href="#top" class="logo">
+      <span class="logo-mark"></span>
+      ميعاد
+    </a>
+    <nav class="main-nav">
+      <a href="#features">المميزات</a>
+      <a href="#booking">صفحة الحجز</a>
+    </nav>
+    <div class="header-actions">
+      <a href="https://emadgad210-lang.github.io/demophone/" class="btn btn-primary btn-sm">اطلب تجربة</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="hero-kicker">نظام لإدارة الحجز والمواعيد في عيادتك</p>
+        <h1 class="hero-title">من أول حجز لحد آخر فاتورة، عيادتك في مكان واحد</h1>
+        <p class="hero-sub">تقويم أسبوعي لكل دكتور، ملف كامل لكل مريض، وصفحة حجز بتشاركها مع مرضاك يحجزوا منها بنفسهم بدل ما يكلموك على التليفون.</p>
+        <div class="hero-ctas">
+          <a href="https://emadgad210-lang.github.io/demophone/" class="btn btn-primary">اطلب تجربة لعيادتك</a>
+          <a href="#features" class="btn btn-ghost">شوف الشاشات</a>
+        </div>
+        <p class="hero-trust">بياناتك محفوظة وخاصة بعيادتك بس <span class="dot"></span> تقدر تصدّر نسخة احتياطية في أي وقت</p>
+      </div>
+
+      <div class="ticket-stage">
+        <div class="float-card float-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          −٧٤٪ مكالمات حجز
+        </div>
+        <div class="ticket">
+          <div class="ticket-top">
+            <p class="ticket-clinic">عيادة <strong>الأمل التخصصية</strong> · د. سارة يوسف</p>
+            <p class="ticket-patient">أحمد جمال</p>
+            <div class="ticket-row">
+              <span class="ticket-label">نوع الكشف</span>
+              <span class="ticket-value">متابعة</span>
+            </div>
+            <div class="ticket-row">
+              <span class="ticket-label">التاريخ</span>
+              <span class="ticket-value">الثلاثاء ١٥ سبتمبر</span>
+            </div>
+          </div>
+          <div class="ticket-bottom">
+            <div class="ticket-time">الموعد<b>٥:٣٠ م</b></div>
+            <div class="stamp">مؤكد</div>
+          </div>
+        </div>
+        <div class="float-card float-2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          محجوز أونلاين من المريض
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAINS -->
+  <section class="pains">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="section-title">طريقة الحجز اللي متعوّد عليها بتاخد وقتك من مرضاك</h2>
+        <p class="section-desc">مش لازم تفضل الحال كده. القديم بيروح، والجديد بياخد مكانه من غير ما تغيّر طريقة شغلك من الآخر.</p>
+      </div>
+      <div class="pains-grid">
+        <div class="pain-item">
+          <p class="pain-old">دفتر مواعيد ورقي بينسى أو بيضيع</p>
+          <p class="pain-new">تقويم أسبوعي واحد على الشاشة، لكل دكتور في العيادة</p>
+        </div>
+        <div class="pain-item">
+          <p class="pain-old">السكرتيرة بترد على تليفونات طول اليوم</p>
+          <p class="pain-new">صفحة حجز بتشاركها مع مرضاك يحجزوا منها بنفسهم</p>
+        </div>
+        <div class="pain-item">
+          <p class="pain-old">حساب الفلوس والمصاريف على ورقة لوحدها</p>
+          <p class="pain-new">فواتير ومرتبات ومصروفات في مكان واحد، بأرقام واضحة</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="section-title">كل قسم في عيادتك، في شاشة واحدة</h2>
+        <p class="section-desc">مش مجموعة أدوات متفرقة. كل قسم بيتكلم مع التاني: الحجز بيحدّث التقويم، والتقويم بيحدّث فاتورة المريض.</p>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-row">
+          <span class="feature-tab"><span class="swatch" style="background:var(--teal)"></span>التقويم الأسبوعي</span>
+          <div class="feature-body">
+            <p>شايف مواعيد كل دكتور أسبوع بأسبوع، وساعات العمل والإجازات متسجلة مسبقًا عشان محدش يحجز في وقت مش موجود فيه.</p>
+            <div class="feature-shot">
+              <div class="mini-calendar">
+                <div class="mini-cal-cell"></div><div class="mini-cal-cell busy"></div><div class="mini-cal-cell"></div>
+                <div class="mini-cal-cell busy amber"></div><div class="mini-cal-cell"></div><div class="mini-cal-cell busy"></div>
+                <div class="mini-cal-cell busy"></div><div class="mini-cal-cell"></div><div class="mini-cal-cell busy amber"></div>
+                <div class="mini-cal-cell"></div><div class="mini-cal-cell busy"></div><div class="mini-cal-cell"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-row">
+          <span class="feature-tab"><span class="swatch" style="background:var(--amber)"></span>ملفات المرضى</span>
+          <div class="feature-body">
+            <p>كل مريض له ملف فيه بياناته وتاريخ زياراته وأنواع الكشوفات اللي عملها، تلاقيه في ثانية وقت الحجز أو المتابعة.</p>
+            <div class="feature-shot">
+              <div class="mini-file-row"><span class="mini-avatar"></span>منى إبراهيم — كشف عام</div>
+              <div class="mini-file-row"><span class="mini-avatar"></span>كريم عادل — متابعة</div>
+              <div class="mini-file-row"><span class="mini-avatar"></span>هدى محمود — كشف مستعجل</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-row">
+          <span class="feature-tab"><span class="swatch" style="background:var(--rust)"></span>فواتير ومصروفات</span>
+          <div class="feature-body">
+            <p>سجّل قيمة كل كشف، والمرتبات والمصاريف الشهرية، وشوف إيرادات العيادة من غير ما تفتح ملف إكسل منفصل.</p>
+            <div class="feature-shot">
+              <div class="mini-bar-row"><div class="mini-bar-track"><div class="mini-bar-fill" style="width:70%"></div></div></div>
+              <div class="mini-bar-row"><div class="mini-bar-track"><div class="mini-bar-fill" style="width:45%; background:var(--amber)"></div></div></div>
+              <div class="mini-bar-row"><div class="mini-bar-track"><div class="mini-bar-fill" style="width:88%; background:var(--rust)"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-row">
+          <span class="feature-tab"><span class="swatch" style="background:var(--teal-deep)"></span>صلاحيات الموظفين</span>
+          <div class="feature-body">
+            <p>افتح للسكرتيرة صلاحية حجز المواعيد بس، واحتفظ بصلاحيات الفواتير والتقارير والإعدادات لنفسك أو لمديرة العيادة.</p>
+            <div class="feature-shot">
+              <div class="mini-file-row"><span class="mini-avatar" style="background:var(--teal-wash)"></span>مدير العيادة — صلاحيات كاملة</div>
+              <div class="mini-file-row"><span class="mini-avatar" style="background:var(--amber-wash)"></span>موظف الاستقبال — حجز مواعيد بس</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOOKING PAGE -->
+  <section id="booking">
+    <div class="wrap">
+      <div class="booking-showcase">
+        <div>
+          <h2 class="section-title">لينك حجز بإسم عيادتك، مرضاك يحجزوا منه لوحدهم</h2>
+          <p class="section-desc">بتشاركها في واتساب أو على صفحة العيادة. المريض بيختار الطبيب ونوع الكشف والوقت المتاح، والحجز بيوصل عندك في التقويم على طول.</p>
+          <ul class="link-list">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              بتعرض بس الأوقات المتاحة فعلًا عند كل دكتور
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              بتمنع تضارب موعدين على نفس الدكتور في نفس الوقت
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              اسم ورقم المريض بيتسجلوا تلقائي في ملف جديد
+            </li>
+          </ul>
+        </div>
+        <div class="phone-mock">
+          <p class="pm-label">عيادة الأمل التخصصية — احجز موعدك</p>
+          <div class="pm-doctor-pick">
+            <span class="on">د. سارة يوسف</span>
+            <span>د. عمر فتحي</span>
+          </div>
+          <div class="pm-field">نوع الكشف: متابعة</div>
+          <div class="pm-field">الثلاثاء ١٥ سبتمبر — ٥:٣٠ م</div>
+          <div class="pm-field">اسم المريض ورقم الموبايل</div>
+          <div class="pm-cta">تأكيد الحجز</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="section-title">آراء عيادات بتستخدمه بالفعل</h2>
+      </div>
+      <div class="notes-row">
+        <div class="note-card">
+          <p class="note-text">بطلنا دفتر المواعيد من أول أسبوع. السكرتيرة بقى وقتها فاضي للمرضى اللي قدامها مش للتليفون.</p>
+          <p class="note-who">د. سارة يوسف — عيادة أطفال</p>
+        </div>
+        <div class="note-card">
+          <p class="note-text">حساب المرتبات والمصاريف بقى واضح قدامنا كل شهر، مش لازق على ورق متفرق زي الأول.</p>
+          <p class="note-who">مدير مركز طبي — القاهرة</p>
+        </div>
+        <div class="note-card">
+          <p class="note-text">المرضى بيحجزوا لوحدهم من اللينك، وأنا بس بشوف اليوم كله في شاشة واحدة الصبح.</p>
+          <p class="note-who">د. عمر فتحي — عيادة عظام</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta" id="demo">
+    <div class="wrap">
+      <h2>جرّب النظام في عيادتك قبل ما تقرر</h2>
+      <p class="section-desc">ابعتلنا اسم عيادتك وعدد الأطباء، ونجهّزلك حساب تجربة تشتغل عليه قبل ما تقرر.</p>
+      <div class="hero-ctas" style="justify-content:center;">
+        <a href="https://emadgad210-lang.github.io/demophone/" class="btn btn-primary">اطلب تجربة مجانية</a>
+        <!-- غيّر الرقم ده برقم واتساب عيادتك (بصيغة كود الدولة من غير + أو صفر، مثلاً 201234567890) -->
+        <a href="https://wa.me/201098905430" target="_blank" rel="noopener" class="btn btn-ghost">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.35 0-2.62-.32-3.75-.9L3 21l1.9-5.65a8.44 8.44 0 0 1-1.15-4.35A8.5 8.5 0 0 1 12.5 3a8.5 8.5 0 0 1 8.5 8.5z"/></svg>
+          تواصل معانا واتساب
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap footer-row">
+    <a href="#top" class="logo" style="font-size:16px;"><span class="logo-mark" style="width:26px;height:26px;"></span>ميعاد</a>
+    <div class="footer-links">
+      <a href="#features">المميزات</a>
+      <a href="#booking">صفحة الحجز</a>
+    </div>
+    <p class="footer-copy">© 2026 ميعاد لإدارة العيادات</p>
+  </div>
+</footer>
+
+</body>
+</html>
