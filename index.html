@@ -376,7 +376,7 @@ function commit(add){
   {const base=add?(counts[cur.code]||0):0,tot=base+v;
     if(tot<0){beep('err');$('msg').innerHTML=add?'<span class="err">الإجمالي مينفعش يبقى أقل من صفر (الجرد الحالي: '+base+')</span>':'<span class="err">الكمية مينفعش تبقى سالبة</span>';return}
     if(v<0&&!confirm('الكمية '+v+' سالبة وهتتخصم من الجرد الحالي ('+base+'). متأكد؟'))return}
-  if(v>=1000&&!confirm('الكمية '+v+' كبيرة. متأكد إنها صح؟'))return;
+  if(v>200&&!confirm('الكمية '+v+' كبيرة. متأكد إنها صح؟'))return;
   const code=cur.code,name=cur.name,prev=counts[code],prevU=units[code],tk=++undoTk,u=$('unit').value;
   if(add&&prev!==undefined&&prevU&&prevU!==u){beep('err');$('msg').innerHTML=`<span class="err">الصنف متجرد بوحدة (${esc(prevU)}). اختار نفس الوحدة، أو دوس "حفظ" لاستبدال الجرد بالوحدة الجديدة</span>`;return}
   undoInfo={code,prev,prevU,tk,box:'msg'};
@@ -567,7 +567,7 @@ function eSave(){
   {const add=eState.mode==='add',base=add?(counts[eState.code]||0):0,tot=base+v;
     if(tot<0){beep('err');$('eMsg').innerHTML=add?'<span class="err">الإجمالي مينفعش يبقى أقل من صفر (الجرد الحالي: '+base+')</span>':'<span class="err">الكمية مينفعش تبقى سالبة</span>';return}
     if(v<0&&!confirm('الكمية '+v+' سالبة وهتتخصم من الجرد الحالي ('+base+'). متأكد؟'))return}
-  if(v>=1000&&!confirm('الكمية '+v+' كبيرة. متأكد إنها صح؟'))return;
+  if(v>200&&!confirm('الكمية '+v+' كبيرة. متأكد إنها صح؟'))return;
   const {code,mode}=eState,u=$('eUnit').value;
   if(mode==='add')rChange(code,(counts[code]||0)+v,units[code]||u,'تمت الزيادة على');
   else rChange(code,v,u,'تم تعديل');
