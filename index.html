@@ -93,6 +93,8 @@ tr.chg td{background:color-mix(in srgb,var(--acc) 16%,transparent)}
    <button class="b big" id="scanBtn" onclick="startScan()">▶ ابدأ المسح</button>
    <button class="b" style="background:var(--acc)" onclick="document.getElementById('chgFile').click()">🔄 أسعار معدلة أو أصناف جديدة</button>
    <input type="file" id="chgFile" accept=".xlsx,.xls,.csv,.txt,.tsv" class="hide">
+   <input type="file" id="camFile" accept="image/*" capture="environment" class="hide">
+   <div id="h5file" style="display:none"></div>
    <label><input type="checkbox" id="onlyChg" onchange="limit=100;render()"> المعدّلة فقط</label>
    <button class="b" onclick="addItem()">+ صنف جديد</button>
    <button class="b g" onclick="selAll(true)">تحديد الكل</button>
@@ -298,14 +300,28 @@ function doScan(v){var c=norm(v),i=document.getElementById('scan');if(!c)return;
  scanCode=c;showScan(findByCode(c),c);i.value='';i.focus()}
 function addFromScan(){var c=scanCode;addItem();items[0].code=c;items[0].d=true;render();save();closeScan();
  var f=document.querySelector('#tb input[data-f=name]');if(f)f.focus()}
-var cam={st:null,tm:null,ov:null},camLast=[];
+var cam={st:null,tm:null,ov:null,h5:null},camLast=[];
+function isMobile(){return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent))}
 function startScan(){
- if(('BarcodeDetector' in window)&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){camScan();return}
+ var md=navigator.mediaDevices&&navigator.mediaDevices.getUserMedia;
+ if(md&&('BarcodeDetector' in window)){camScan();return}
+ if(md){camScanLib();return}
+ if(isMobile()){photoScan();return}
  var i=document.getElementById('scan');i.focus();if(i.select)i.select();
  note('جاهز للمسح ✅ الخانة متفعّلة: امسح الباركود بالسكانر، أو اكتب الكود واضغط Enter.')}
+function camFail(msg){camStop();
+ note(msg+(isMobile()?' <button class="b" style="margin-inline-start:8px" onclick="photoScan()">📸 افتح كاميرا الموبايل وصوّر الباركود</button>':''),'err')}
 function camStop(){if(cam.tm){clearInterval(cam.tm);cam.tm=null}
  if(cam.st){cam.st.getTracks().forEach(function(t){t.stop()});cam.st=null}
+ if(cam.h5){var x=cam.h5;cam.h5=null;try{x.stop().catch(function(){}).then(function(){try{x.clear()}catch(e){}})}catch(e){}}
  if(cam.ov){cam.ov.remove();cam.ov=null}}
+function camOpen(top){
+ camStop();
+ var ov=document.createElement('div');cam.ov=ov;
+ ov.style.cssText='position:fixed;inset:0;background:#000;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;overflow:auto';
+ ov.innerHTML=top+'<div id="camRes" style="width:100%;max-width:520px;color:#fff;background:#1c1c1c;border-radius:12px;padding:10px 12px;text-align:center;min-height:56px">وجّه الكاميرا ناحية الباركود…</div>'+
+  '<button class="b" onclick="camStop();window.scrollTo(0,0)">إنهاء المسح</button>';
+ document.body.appendChild(ov);return ov}
 function camHit(c){
  var r=findByCode(c);camLast=r;scanCode=c;showScan(r,c);
  try{if(navigator.vibrate)navigator.vibrate(80)}catch(e){}
@@ -321,23 +337,57 @@ function camSel(){camLast.forEach(function(x){upd(x.id,'sel',true)});render();sh
 function camScan(){
  if(!('BarcodeDetector' in window)||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
   note('المسح بالكاميرا مش متاح هنا. استخدم Chrome على أندرويد (والصفحة على رابط https)، أو جهاز سكانر، أو اكتب الكود واضغط Enter.','err');return}
- camStop();
- var ov=document.createElement('div');cam.ov=ov;
- ov.style.cssText='position:fixed;inset:0;background:#000;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;overflow:auto';
- ov.innerHTML='<video playsinline muted autoplay style="width:100%;max-width:520px;max-height:55vh;background:#000;border-radius:12px"></video>'+
-  '<div id="camRes" style="width:100%;max-width:520px;color:#fff;background:#1c1c1c;border-radius:12px;padding:10px 12px;text-align:center;min-height:56px">وجّه الكاميرا ناحية الباركود…</div>'+
-  '<button class="b" onclick="camStop();window.scrollTo(0,0)">إنهاء المسح</button>';
- document.body.appendChild(ov);
+ var ov=camOpen('<video playsinline muted autoplay style="width:100%;max-width:520px;max-height:55vh;background:#000;border-radius:12px"></video>');
  var v=ov.querySelector('video');
  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false}).then(function(st){
-  if(!cam.ov){st.getTracks().forEach(function(t){t.stop()});return}
+  if(cam.ov!==ov){st.getTracks().forEach(function(t){t.stop()});return}
   cam.st=st;v.srcObject=st;var pl=v.play();if(pl&&pl.catch)pl.catch(function(){});
   var det;try{det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf']})}catch(e){det=new BarcodeDetector()}
   var busy=false,last='',lastT=0;
   cam.tm=setInterval(function(){if(busy||v.readyState<2)return;busy=true;
    det.detect(v).then(function(r){busy=false;if(r&&r.length){var c=r[0].rawValue,n=Date.now();if(c===last&&n-lastT<2500){lastT=n;return}last=c;lastT=n;camHit(c)}}).catch(function(){busy=false})},250);
- }).catch(function(){camStop();note('مقدرتش أفتح الكاميرا. اتأكد إنك سمحت للمتصفح بالكاميرا.','err')});
+ }).catch(function(){camFail('مقدرتش أفتح الكاميرا. اتأكد إنك سمحت للمتصفح بالكاميرا.')});
 }
+function loadH5(ok,fail){
+ if(window.Html5Qrcode){ok();return}
+ var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js';
+ s.onload=ok;s.onerror=fail;document.head.appendChild(s)}
+function camScanLib(){
+ var ov=camOpen('<div id="h5reader" style="width:100%;max-width:520px;min-height:220px;background:#111;border-radius:12px;overflow:hidden"></div>');
+ document.getElementById('camRes').textContent='جاري تشغيل الكاميرا…';
+ loadH5(function(){
+  if(cam.ov!==ov)return;
+  var F=Html5QrcodeSupportedFormats,q;
+  try{q=new Html5Qrcode('h5reader',{formatsToSupport:[F.EAN_13,F.EAN_8,F.UPC_A,F.UPC_E,F.CODE_128,F.CODE_39,F.ITF],verbose:false})}
+  catch(e){camStop();note('مقدرتش أشغّل قارئ الباركود في المتصفح ده. استخدم سكانر أو اكتب الكود.','err');return}
+  cam.h5=q;var last='',lastT=0;
+  q.start({facingMode:'environment'},
+   {fps:10,qrbox:function(w,h){var bw=Math.max(150,Math.min(w-20,380));return{width:bw,height:Math.max(70,Math.min(h-10,Math.round(bw*.45)))}}},
+   function(txt){var n=Date.now();if(txt===last&&n-lastT<2500){lastT=n;return}last=txt;lastT=n;camHit(txt)},
+   function(){}
+  ).then(function(){var r=document.getElementById('camRes');if(r&&r.textContent.indexOf('جاري')===0)r.textContent='وجّه الكاميرا ناحية الباركود…'})
+   .catch(function(){camFail('مقدرتش أفتح الكاميرا. اتأكد إنك سمحت للمتصفح بالكاميرا، وإن الصفحة على رابط https.')});
+ },function(){camStop();note('مقدرتش أحمّل مكتبة المسح (محتاجة إنترنت). استخدم سكانر أو اكتب الكود واضغط Enter.','err')});
+}
+var FMT=['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf'];
+function photoScan(){document.getElementById('camFile').click()}
+function photoDone(c){
+ if(!c){note('مقدرتش أقرا باركود من الصورة. قرّب وصوّر الباركود لوحده وبوضوح وجرّب تاني. <button class="b" style="margin-inline-start:8px" onclick="photoScan()">📸 صوّر تاني</button>','err');return}
+ document.getElementById('msg').classList.add('hide');camHit(c);window.scrollTo(0,0)}
+function photoLib(f){
+ loadH5(function(){
+  var F=Html5QrcodeSupportedFormats,q;
+  try{q=new Html5Qrcode('h5file',{formatsToSupport:[F.EAN_13,F.EAN_8,F.UPC_A,F.UPC_E,F.CODE_128,F.CODE_39,F.ITF],verbose:false})}catch(e){photoDone('');return}
+  q.scanFile(f,false).then(function(txt){photoDone(txt)}).catch(function(){photoDone('')})
+ },function(){note('مقدرتش أحمّل مكتبة القراءة (محتاجة إنترنت). اكتب الكود واضغط Enter.','err')})}
+function decodePhoto(f){
+ note('جاري قراءة الصورة…');
+ if('BarcodeDetector' in window&&window.createImageBitmap){
+  var det;try{det=new BarcodeDetector({formats:FMT})}catch(e){det=new BarcodeDetector()}
+  createImageBitmap(f).then(function(bm){return det.detect(bm)}).then(function(r){if(r&&r.length)photoDone(r[0].rawValue);else photoLib(f)}).catch(function(){photoLib(f)});
+  return}
+ photoLib(f)}
+document.addEventListener('DOMContentLoaded',function(){document.getElementById('camFile').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;decodePhoto(f);e.target.value=''})});
 load();render();
 </script>
 </body>
